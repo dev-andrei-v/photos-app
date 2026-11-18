@@ -9,7 +9,7 @@ import UIKit
 struct ViewerMedia {
     let pipeline: RemoteImagePipeline
     let originals: OriginalStore
-    /// True on the home network: the original (sharper, HDR) is fetched once a
+    /// True on Wi-Fi: the original (sharper, HDR) is fetched once a
     /// page has settled. Otherwise only when zooming in.
     let loadsOriginalWhenSettled: () -> Bool
     /// Photos on the phone load from PhotoKit instead.
@@ -479,7 +479,7 @@ final class ViewerPageCell: UICollectionViewCell {
         }
     }
 
-    /// Attaches the live view and loads the motion (phone: always; Cloud: on the home network or when pressed).
+    /// Attaches the live view and loads the motion (phone: always; Cloud: on Wi-Fi or when pressed).
     private func prepareLive(preload: Bool, hint: Bool) {
         guard let item, item.isLivePhoto, !LivePhotoSettings.isOff(item.id), let media else { return }
         if live == nil {

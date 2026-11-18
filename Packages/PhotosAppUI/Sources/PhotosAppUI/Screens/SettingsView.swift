@@ -102,7 +102,7 @@ struct AppSettingsSections: View {
             case .unknown, .checking:
                 LabeledContent("Status") { ProgressView() }
             case .connected(let server):
-                LabeledContent("Status", value: server.route == .local ? "Home (local network)" : "Away (Tailscale)")
+                LabeledContent("Status", value: "Connected")
                 LabeledContent("Address", value: server.url.absoluteString)
             case .unreachable(let reasons):
                 LabeledContent("Status", value: "Not reachable")

@@ -36,7 +36,7 @@ public final class AppModel {
         self.accounts = accounts
         self.serverSettings = serverSettings
         self.provider = provider
-        selector = ServerSelector(prober: provider.prober) { @MainActor in serverSettings.addresses }
+        selector = ServerSelector(prober: provider.prober) { @MainActor in serverSettings.address }
     }
 
     public var isSignedIn: Bool { accounts.activeAccount != nil }
@@ -275,7 +275,7 @@ public final class AppModel {
 
     // MARK: Accounts
 
-    /// Signs in against whichever configured address answers first.
+    /// Signs in at the configured server address.
     public func signIn(email: String, password: String) async throws {
         let server = try await reachableServer()
         let result = try await provider.signIn(at: server.url, email: email.trimmingCharacters(in: .whitespaces), password: password)
@@ -323,7 +323,7 @@ public final class AppModel {
     private func completeSignIn(_ result: CloudSignIn, via server: ActiveServer) throws {
         let account = Account(userID: result.userID, email: result.email, name: result.name, isAdmin: result.isAdmin)
         try accounts.signIn(account, token: result.token)
-        Log.networking.info("Signed in as \(result.email, privacy: .private) via \(server.route.rawValue, privacy: .public)")
+        Log.networking.info("Signed in as \(result.email, privacy: .private) at \(server.url.host() ?? "", privacy: .public)")
         openSessionForActiveAccount()
     }
 
@@ -381,23 +381,15 @@ public final class AppModel {
 
     // MARK: Diagnostics
 
-    /// Pings each configured address separately and reports the result, so the
-    /// App Transport Security behaviour can be checked on a device.
+    /// Pings the configured address and reports the result, so the App Transport Security
+    /// behaviour can be checked on a device.
     /// Run with the launch argument `-ConnectivitySelfTest`.
     public func connectivityReport() async -> [String] {
-        let addresses = serverSettings.addresses
-        var lines: [String] = []
-        for (label, url) in [("Local", addresses.local), ("Remote", addresses.remote)] {
-            guard let url else {
-                lines.append("\(label): not configured")
-                continue
-            }
-            switch await prober.ping(url, timeout: .seconds(5)) {
-            case .success: lines.append("\(label) \(url.absoluteString): OK")
-            case .failure(let error): lines.append("\(label) \(url.absoluteString): FAILED – \(error.message)")
-            }
+        guard let url = serverSettings.address else { return ["Server: not configured"] }
+        switch await prober.ping(url, timeout: .seconds(5)) {
+        case .success: return ["\(url.absoluteString): OK"]
+        case .failure(let error): return ["\(url.absoluteString): FAILED – \(error.message)"]
         }
-        return lines
     }
 
     /// `-SelfTestURL <url>` adds an extra address to the self-test (e.g. one without an ATS exception, as a control).

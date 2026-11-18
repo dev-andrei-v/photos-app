@@ -70,7 +70,7 @@ private let server = URL(string: "http://192.168.1.10:2283")!
 
 @Suite struct MediaSourceTests {
     @Test func buildsImmichMediaURLs() {
-        let connection = ImmichProvider().connection(to: ActiveServer(route: .local, url: server), token: "token")
+        let connection = ImmichProvider().connection(to: ActiveServer(url: server), token: "token")
         let thumb = connection.media.imageRequest(assetID: "a1", size: .thumbnail)
         #expect(thumb.url?.absoluteString == "http://192.168.1.10:2283/api/assets/a1/thumbnail?size=thumbnail")
         #expect(thumb.value(forHTTPHeaderField: "Authorization") == "Bearer token")
@@ -79,8 +79,8 @@ private let server = URL(string: "http://192.168.1.10:2283")!
         #expect(video.url.absoluteString == "http://192.168.1.10:2283/api/assets/v1/video/playback")
         #expect(video.headers["Authorization"] == "Bearer token")
         // Same server and account → equal sources (caches stay valid); another token → different.
-        let again = ImmichProvider().connection(to: ActiveServer(route: .local, url: server), token: "token").media
-        let other = ImmichProvider().connection(to: ActiveServer(route: .local, url: server), token: "other").media
+        let again = ImmichProvider().connection(to: ActiveServer(url: server), token: "token").media
+        let other = ImmichProvider().connection(to: ActiveServer(url: server), token: "other").media
         #expect(connection.media == again)
         #expect(connection.media != other)
     }

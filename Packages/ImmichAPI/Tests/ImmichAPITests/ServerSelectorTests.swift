@@ -9,14 +9,20 @@ import Testing
         ("http://192.168.1.10:2283/", "http://192.168.1.10:2283"),
         ("http://100.64.0.10:2283/api", "http://100.64.0.10:2283"),
         (" https://photos.example.com/api/ ", "https://photos.example.com"),
+        ("photos.example.com", "https://photos.example.com"),
+        ("photos.example.com/api", "https://photos.example.com"),
+        ("http://photos.example.com:2283", "http://photos.example.com:2283"),
+        ("pi:2283", "http://pi:2283"),
+        ("server.local:2283", "http://server.local:2283"),
+        ("my-server.tail1234.ts.net:2283", "http://my-server.tail1234.ts.net:2283"),
     ])
     func normalizes(input: String, expected: String) {
-        #expect(ServerAddresses.normalize(input)?.absoluteString == expected)
+        #expect(ServerAddress.normalize(input)?.absoluteString == expected)
     }
 
     @Test(arguments: ["", "   ", "ftp://host", "http://"])
     func rejects(input: String) {
-        #expect(ServerAddresses.normalize(input) == nil)
+        #expect(ServerAddress.normalize(input) == nil)
     }
 
     @Test func apiURLAppendsApi() {

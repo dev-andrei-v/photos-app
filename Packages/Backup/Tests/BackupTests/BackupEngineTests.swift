@@ -71,7 +71,7 @@ private struct FakeTransport: CloudBackupTransport {
 }
 
 private final class FakeConnection: CloudConnection, @unchecked Sendable {
-    let server = ActiveServer(route: .local, url: URL(string: "https://cloud.test")!)
+    let server = ActiveServer(url: URL(string: "https://cloud.test")!)
     var media: MediaSource { MediaSource(identity: "x", image: { _, _ in URLRequest(url: URL(string: "x:")!) }, original: { _ in URLRequest(url: URL(string: "x:")!) }, video: { _ in (URL(string: "x:")!, [:]) }) }
     let lock = NSLock()
     /// Checksums the server already has → asset id.

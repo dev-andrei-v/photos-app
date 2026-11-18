@@ -99,7 +99,7 @@ final class ViewerViewController: UIViewController {
         media = ViewerMedia(
             pipeline: session.pipeline,
             originals: session.originals,
-            loadsOriginalWhenSettled: { [weak session] in session?.isOnHomeNetwork ?? false },
+            loadsOriginalWhenSettled: { [weak session] in session?.loadsOriginalsWhenSettled ?? false },
             phone: session.phoneImages,
             videoStream: { [weak session] id in session?.connection?.media.videoStream(assetID: id) },
             motionPart: { [weak session] id in

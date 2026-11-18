@@ -298,8 +298,11 @@ public final class LibrarySession {
         return try? database.reader.read { db in try AssetDetails.fetch(id: assetID, in: db) }
     }
 
-    /// On the home network the viewer fetches originals as soon as a photo settles.
-    var isOnHomeNetwork: Bool { server?.route == .local }
+    /// On Wi-Fi (not a hotspot or Low Data Mode) the viewer fetches originals as soon as a photo settles.
+    var loadsOriginalsWhenSettled: Bool {
+        guard server != nil, let path = network.current else { return false }
+        return path.isSatisfied && !path.isExpensive && !path.isConstrained
+    }
 
     public func details(for assetID: String) async -> AssetDetails? {
         if assetID.hasPrefix("local:") { return phoneDetails(localID: String(assetID.dropFirst(6))) }

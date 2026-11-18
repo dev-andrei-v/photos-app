@@ -3,7 +3,6 @@
 // Free provisioning profiles expire after 7 days: reinstall weekly.
 DEVELOPMENT_TEAM =
 
-// Your Cloud server: home address and away (e.g. Tailscale) address, as host:port.
-// They're prefilled at sign-in, and plain HTTP is allowed to these two hosts only.
-CLOUD_DEFAULT_LOCAL_SERVER =
-CLOUD_DEFAULT_REMOTE_SERVER =
+// Your Cloud server, e.g. photos.example.com (reached over HTTPS) or 192.168.1.10:2283.
+// It's prefilled at sign-in. If it is an IP number, plain HTTP is allowed to it.
+CLOUD_DEFAULT_SERVER =

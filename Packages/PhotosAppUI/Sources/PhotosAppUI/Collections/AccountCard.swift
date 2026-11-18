@@ -276,9 +276,7 @@ struct AccountCard: View {
     private var cardTitle: String {
         if session.needsSignIn { return String(localized: "SIGN IN REQUIRED") }
         if model.isSyncPaused { return String(localized: "CLOUD NOT REACHABLE") }
-        if case .connected(let server) = model.connection {
-            return server.route == .local ? String(localized: "CLOUD · HOME NETWORK") : String(localized: "CLOUD · AWAY (TAILSCALE)")
-        }
+        if case .connected = model.connection { return String(localized: "CLOUD · CONNECTED") }
         return String(localized: "CLOUD")
     }
 

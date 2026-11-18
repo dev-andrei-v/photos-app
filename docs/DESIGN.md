@@ -75,9 +75,9 @@ Local Swift packages, all in Swift 6 language mode (strict concurrency), assembl
   server probe, sync and PhotoKit diffing run afterwards.
 - **Merge.** Server items are paired with phone items by checksum. Phone items not yet hashed show as
   phone-only until they are; identities stay stable so tiles don't move.
-- **Server selection.** On launch, foreground and every network change, the home address is probed
-  (`/server/ping`, 1.5 s); otherwise the away address (e.g. Tailscale) is used. No location or Wi-Fi
-  name permission is needed.
+- **Server reachability.** There is one server address. On launch, foreground and every network
+  change it is probed (`/server/ping`, 6 s); while it doesn't answer, the app works from the phone's
+  database and syncing is paused.
 - **Backup.** Newest first; a Live Photo's motion part before its still. Each file streams from PhotoKit
   into the upload body and the SHA-1 in one pass, so bytes and checksum always agree. Two uploads at a
   time, exponential backoff (30 s × 2ⁿ, at most 6 h), a temporary-file budget, and a guard that skips a
@@ -85,7 +85,7 @@ Local Swift packages, all in Swift 6 language mode (strict concurrency), assembl
 - **Live Photos from the server** are built from both originals (`PHLivePhoto` needs the content
   identifier metadata that previews drop).
 - **HDR.** Phone photos display with high dynamic range; server photos get HDR from the original's
-  gain map when it's downloaded (zoom, or after settling on the home network).
+  gain map when it's downloaded (zoom, or after settling on Wi-Fi).
 - **Editing.** Edits are parameters (`EditState`) rendered with Core Image in extended range.
   Phone items are saved as PhotoKit edits (original kept, revertible), photos with a fresh gain map
   computed from the edited HDR rendition and the original metadata; trim-only video edits are copied

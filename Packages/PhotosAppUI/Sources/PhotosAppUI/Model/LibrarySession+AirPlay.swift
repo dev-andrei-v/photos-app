@@ -3,16 +3,16 @@ import Core
 import Foundation
 
 /// AirPlay for Cloud videos. A receiver fetches the URL itself, so it can't
-/// send the app's sign-in. At home it gets a one-video public link that expires after an
+/// send the app's sign-in. It gets a one-video public link that expires after an
 /// hour and is deleted as soon as playback ends (and at the next launch if the app was
-/// stopped first). Away from home the receiver can't reach the server at all, so the
+/// stopped first). When only this phone can reach the server (a Tailscale address), the
 /// video is downloaded and AirPlay streams the local file.
 extension LibrarySession {
     private static let linksKey = "airplay.temporaryLinks"
 
     func airPlayVideoURL(assetID: String) async throws -> URL {
         let connection = try connected()
-        if connection.server.route == .local {
+        if connection.server.isReachableByOtherDevices {
             let link = try await connection.temporaryPublicVideoURL(assetID: assetID, expiresAt: .now.addingTimeInterval(3600))
             var links = UserDefaults.standard.stringArray(forKey: Self.linksKey) ?? []
             links.append(link.id)

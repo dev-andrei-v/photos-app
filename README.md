@@ -43,7 +43,7 @@ Photos and personal details are blurred.
 
 | Milestone | Status | Notes |
 |---|---|---|
-| M1 Foundations | Done | Sign-in, home/away server switching, synced timeline, thumbnail cache |
+| M1 Foundations | Done | Sign-in (password or single sign-on), synced timeline, thumbnail cache |
 | M2 Viewer + UI parity | Done | Grid, viewer, Library/Collections/Search, select mode, share screen |
 | M3 Local-first library | Done | iPhone + Cloud merged and de-duplicated by checksum; works offline |
 | M4 Live Photos, video, AirPlay | Done | Player with zoom, Live Photos, AirPlay, external display |
@@ -105,7 +105,7 @@ Photos and personal details are blurred.
 **Account and settings**
 - Sign in with email and password, or with the server's single sign-on (OAuth / OpenID Connect, e.g. Authentik). It uses the official app's redirect, `app.immich:///oauth-callback`, so an identity provider already set up for Immich's mobile app needs no changes.
 - An account card with the picture taken from your contact card or a photo.
-- Cloud Server Settings: server addresses, accounts, sync, offline and storage, Hidden PIN, and troubleshooting with a log viewer.
+- Cloud Server Settings: server address, accounts, sync, offline and storage, Hidden PIN, and troubleshooting with a log viewer.
 
 **Privacy**
 - No analytics, ads, tracking or crash-reporting services, and no account with the developer. The app talks only to your own server.
@@ -141,8 +141,9 @@ Photos and personal details are blurred.
 ## Recommended server setup
 
 - **[Immich](https://immich.app) v3.3.5** in Docker. A **Raspberry Pi 4 with 2 GB** works. The app keeps to 4 thumbnail requests and 2 uploads at a time.
-- **Storage:** an SSD over USB 3. Keep the Pi on Ethernet, with a DHCP reservation so its home address never changes.
-- **Away from home:** [Tailscale](https://tailscale.com) on the server and the phone. The app tries the home address first (1.5 s), then the Tailscale address.
+- **Storage:** an SSD over USB 3. Keep the Pi on Ethernet.
+- **One address everywhere:** put the server behind a reverse proxy with HTTPS on a name of its own (e.g. `photos.example.com`) and enter that name in the app. The app uses a single server address, at home and away.
+- **Single sign-on:** turn on OAuth in Immich and point it at your identity provider (Authentik, Keycloak, …). In the provider, allow the redirect `app.immich:///oauth-callback`, or turn on Immich's *mobile redirect URI override*.
 - **Reliability on small boards:**
   - Make the system journal persistent (`sudo mkdir -p /var/log/journal`).
   - Enable the hardware watchdog (`RuntimeWatchdogSec=15` in `/etc/systemd/system.conf`).
@@ -162,9 +163,9 @@ Photos and personal details are blurred.
 
 With a free account the app must be re-signed every **7 days**: install the same `.ipa` again (AltStore can do it automatically). Your data is kept.
 
-**Server address:** plain HTTP works on your home network (e.g. `192.168.1.10:2283`).
+**Server address:** enter the one address your server is reached at. A name such as `photos.example.com` is reached over HTTPS. Plain HTTP works for a local-network address (e.g. `192.168.1.10:2283`), which then only works on that network.
 
-**Away from home with Tailscale:** use your server's Tailscale **name**, not its number. In the Tailscale app or admin page, turn on **MagicDNS** and copy the server's full name, which ends in `.ts.net`. Then enter it in the app with the port, for example `http://my-server.tail1234.ts.net:2283`. Plain HTTP is fine here because Tailscale already encrypts everything between your devices. A Tailscale number such as `100.x.y.z` won't work with the release build (iOS blocks plain HTTP to it); a server with HTTPS works anywhere.
+**With Tailscale:** use your server's Tailscale **name**, not its number. In the Tailscale app or admin page, turn on **MagicDNS** and copy the server's full name, which ends in `.ts.net`. Then enter it in the app with the port, for example `http://my-server.tail1234.ts.net:2283`. Plain HTTP is fine here because Tailscale already encrypts everything between your devices. A Tailscale number such as `100.x.y.z` won't work with the release build (iOS blocks plain HTTP to it); a server with HTTPS works anywhere.
 
 ### Option B: build it yourself
 
@@ -172,7 +173,7 @@ With a free account the app must be re-signed every **7 days**: install the same
 2. Clone the repository and set your signing team and server:
    ```sh
    git clone https://github.com/arrnav/photos-app.git && cd photos-app
-   cp Config/Local.xcconfig.template Config/Local.xcconfig   # set DEVELOPMENT_TEAM and your server addresses
+   cp Config/Local.xcconfig.template Config/Local.xcconfig   # set DEVELOPMENT_TEAM and your server address
    ```
 3. Connect the iPhone and find its UDID: `xcrun devicectl list devices`.
 4. Build and install a Release build (this also downloads the 48 MB depth model for Spatial Scene, once, and checks it):
@@ -186,7 +187,7 @@ A free developer account (Personal Team) works. Free profiles last 7 days, so ru
 ## Usage
 
 **First launch**
-1. Sign in with your server account, or with **Sign In with Single Sign-On** when the server uses OAuth. Enter the server with `https://` if it is reached by a public name.
+1. Sign in with your server account, or with **Sign In with Single Sign-On** when the server uses OAuth. Enter the server's address first, e.g. `photos.example.com`.
 2. Allow **Full** Photos access, so the iPhone's photos join the Library.
 
 **Back up**

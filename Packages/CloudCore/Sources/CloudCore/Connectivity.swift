@@ -1,18 +1,22 @@
 import Core
 import Foundation
 
-public enum ServerRoute: String, Sendable, Hashable {
-    case local
-    case remote
-}
-
+/// The server address that answered.
 public struct ActiveServer: Sendable, Hashable {
-    public let route: ServerRoute
     public let url: URL
 
-    public init(route: ServerRoute, url: URL) {
-        self.route = route
+    public init(url: URL) {
         self.url = url
+    }
+
+    /// False for addresses only this phone's VPN can reach (Tailscale: `*.ts.net` names and
+    /// 100.64.0.0/10 numbers), which an AirPlay receiver can't open itself.
+    public var isReachableByOtherDevices: Bool {
+        guard let host = url.host()?.lowercased() else { return false }
+        if host.hasSuffix(".ts.net") { return false }
+        let numbers = host.split(separator: ".").compactMap { UInt8($0) }
+        if numbers.count == 4, host.split(separator: ".").count == 4, numbers[0] == 100, (64...127).contains(numbers[1]) { return false }
+        return true
     }
 }
 
@@ -20,7 +24,7 @@ public enum ConnectionStatus: Sendable, Equatable {
     case unknown
     case checking
     case connected(ActiveServer)
-    /// Neither address answered. Each entry describes one address, e.g. "Local (192.168.1.10): timed out".
+    /// The server didn't answer. Each entry is a reason, e.g. "photos.example.com: timed out".
     case unreachable([String])
 
     public var activeServer: ActiveServer? {
@@ -33,31 +37,27 @@ public protocol ServerProber: Sendable {
     func ping(_ server: URL, timeout: Duration) async -> Result<Void, CloudError>
 }
 
-/// Chooses between the local and remote address: the local one is used if it
-/// answers `/server/ping` within a short timeout, otherwise the remote one.
+/// Checks that the configured address answers `/server/ping`.
 /// Concurrent `resolve()` calls share one probe.
 public actor ServerSelector {
-    public typealias AddressSource = @Sendable () async -> ServerAddresses
+    public typealias AddressSource = @Sendable () async -> URL?
 
     public private(set) var status: ConnectionStatus = .unknown
 
     private let prober: any ServerProber
-    private let addresses: AddressSource
-    private let localTimeout: Duration
-    private let remoteTimeout: Duration
+    private let address: AddressSource
+    private let timeout: Duration
     private var inFlight: Task<ConnectionStatus, Never>?
     private var continuations: [UUID: AsyncStream<ConnectionStatus>.Continuation] = [:]
 
     public init(
         prober: any ServerProber,
-        localTimeout: Duration = .milliseconds(1500),
-        remoteTimeout: Duration = .seconds(6),
-        addresses: @escaping AddressSource
+        timeout: Duration = .seconds(6),
+        address: @escaping AddressSource
     ) {
         self.prober = prober
-        self.addresses = addresses
-        self.localTimeout = localTimeout
-        self.remoteTimeout = remoteTimeout
+        self.address = address
+        self.timeout = timeout
     }
 
     public var activeServer: ActiveServer? { status.activeServer }
@@ -87,31 +87,18 @@ public actor ServerSelector {
     }
 
     private func probe() async -> ConnectionStatus {
-        let addresses = await addresses()
-        var failures: [String] = []
-
-        let candidates: [(ServerRoute, URL, Duration)] = [
-            addresses.local.map { (.local, $0, localTimeout) },
-            addresses.remote.map { (.remote, $0, remoteTimeout) },
-        ].compactMap { $0 }
-
-        guard !candidates.isEmpty else {
+        guard let url = await address() else {
             return .unreachable(["No server address is configured."])
         }
-
-        for (route, url, timeout) in candidates {
-            switch await prober.ping(url, timeout: timeout) {
-            case .success:
-                Log.networking.info("Using \(route.rawValue, privacy: .public) server \(url.absoluteString, privacy: .public)")
-                return .connected(ActiveServer(route: route, url: url))
-            case .failure(let error):
-                let label = route == .local ? "Local" : "Remote"
-                let entry = "\(label) (\(url.host() ?? url.absoluteString)): \(error.message)"
-                Log.networking.notice("\(entry, privacy: .public)")
-                failures.append(entry)
-            }
+        switch await prober.ping(url, timeout: timeout) {
+        case .success:
+            Log.networking.info("Using server \(url.absoluteString, privacy: .public)")
+            return .connected(ActiveServer(url: url))
+        case .failure(let error):
+            let entry = "\(url.host() ?? url.absoluteString): \(error.message)"
+            Log.networking.notice("\(entry, privacy: .public)")
+            return .unreachable([entry])
         }
-        return .unreachable(failures)
     }
 
     private func publish(_ newStatus: ConnectionStatus) {

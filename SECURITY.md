@@ -12,9 +12,9 @@ repository. Don't open a public issue for them. You'll get a reply within a week
   for the account.
 - **Hidden (the server's Locked Folder):** the PIN is stored behind Face ID / passcode. When the album
   locks (on leaving the app), cached thumbnails, previews and originals of hidden items are deleted.
-- **Network:** HTTPS is used whenever the server offers it. Plain HTTP is allowed only to private home
+- **Network:** HTTPS is used whenever the server offers it. Plain HTTP is allowed only to private local
   network addresses, short local names and Tailscale MagicDNS names (`*.ts.net`), which Tailscale encrypts.
-  Sign-in over plain HTTP on a home network sends the password unencrypted on that network: use HTTPS
+  Sign-in over plain HTTP on a local network sends the password unencrypted on that network: use HTTPS
   if the network isn't trusted.
 - **No tracking:** there's no analytics or tracking code. Besides your own server, the app only uses
   the system's map service (maps and place search), and opens a maps app or website when you ask it to.
