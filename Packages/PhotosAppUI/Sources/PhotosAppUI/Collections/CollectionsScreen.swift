@@ -1,4 +1,5 @@
 import Core
+import MapKit
 import MediaCache
 import CloudCore
 import Persistence
@@ -211,7 +212,7 @@ struct CollectionsScreen: View {
             CardRow {
                 ForEach(collections.pinned) { smart in
                     NavigationLink(value: CollectionRoute.smart(smart)) {
-                        SmartCard(smart: smart, keyItem: keyItem(for: smart), pipeline: session.pipeline, size: size)
+                        SmartCard(smart: smart, keyItem: keyItem(for: smart), session: session, size: size)
                     }
                     .buttonStyle(.plain)
                 }
@@ -432,13 +433,14 @@ private struct CoverCard<Cover: View>: View {
 private struct SmartCard: View {
     let smart: SmartCollection
     let keyItem: TimelineItem?
-    let pipeline: RemoteImagePipeline
+    let session: LibrarySession
     let size: CGFloat
+    private var pipeline: RemoteImagePipeline { session.pipeline }
 
     var body: some View {
         CoverCard(title: smart.title, size: size, badge: smart == .favourites ? "heart.fill" : nil) {
             if smart == .map {
-                MapCover()
+                MapCover(session: session)
             } else if let keyItem {
                 PipelineImage(item: keyItem, pipeline: pipeline, pixelSize: 500)
             } else {
@@ -510,14 +512,55 @@ extension CloudMemory {
 }
 
 /// A map tile for Pinned › Map.
+/// The Map card: a map of where the newest geotagged photo was taken, with that photo on it.
+/// Until the map is drawn (or when no photo has a location) it shows a plain map symbol.
 private struct MapCover: View {
+    let session: LibrarySession
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var newest: AssetLocation?
+    @State private var snapshot: UIImage?
+
+    /// Snapshots already drawn, so scrolling the card off and on doesn't redraw the map.
+    @MainActor private static var drawn: [String: UIImage] = [:]
+
     var body: some View {
         ZStack {
             LinearGradient(colors: [Color(red: 0.82, green: 0.9, blue: 0.78), Color(red: 0.72, green: 0.84, blue: 0.9)], startPoint: .topLeading, endPoint: .bottomTrailing)
-            Image(systemName: "map.fill")
-                .font(.system(size: 34))
-                .foregroundStyle(.white.opacity(0.85))
+            if let snapshot, let newest {
+                Image(uiImage: snapshot).resizable().scaledToFill()
+                PipelineImage(assetID: newest.assetID, thumbhash: nil, pipeline: session.pipeline, pixelSize: 200, size: .thumbnail)
+                    .frame(width: 46, height: 46)
+                    .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous).stroke(.white, lineWidth: 2.5))
+                    .shadow(radius: 3)
+            } else {
+                Image(systemName: "map.fill")
+                    .font(.system(size: 34))
+                    .foregroundStyle(.white.opacity(0.85))
+            }
         }
+        .task(id: colorScheme) { await draw() }
+    }
+
+    private func draw() async {
+        guard let location = await session.locations(limit: 1).first else { return }
+        newest = location
+        let key = "\(location.assetID)-\(colorScheme == .dark)"
+        if let image = Self.drawn[key] {
+            snapshot = image
+            return
+        }
+        let options = MKMapSnapshotter.Options()
+        options.region = MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude),
+            latitudinalMeters: 12_000, longitudinalMeters: 12_000
+        )
+        options.size = CGSize(width: 240, height: 240)
+        options.pointOfInterestFilter = .excludingAll
+        options.traitCollection = UITraitCollection(userInterfaceStyle: colorScheme == .dark ? .dark : .light)
+        guard let image = try? await MKMapSnapshotter(options: options).start().image else { return }
+        Self.drawn = [key: image]
+        snapshot = image
     }
 }
 

@@ -749,6 +749,7 @@ private struct LibraryMapScreen: View {
     @State private var position = MapCameraPosition.automatic
     @State private var span: Double = 20
     @State private var locations: [AssetLocation] = []
+    @State private var loaded = false
 
     var body: some View {
         Map(position: $position) {
@@ -783,10 +784,39 @@ private struct LibraryMapScreen: View {
         }
         .navigationTitle("Map")
         .navigationBarTitleDisplayMode(.inline)
+        .overlay {
+            if loaded && locations.isEmpty {
+                ContentUnavailableView(String(localized: "No Places"), systemImage: "map", description: Text("Photos and videos with a location appear here."))
+                    .background(.regularMaterial)
+            }
+        }
         .task {
             locations = await session.locations()
+            loaded = true
+            // Frame every photo once. Left on automatic, the map would re-frame itself each time
+            // the groups change, which changes the groups again.
+            if let region = Self.region(fitting: locations) {
+                span = region.span.latitudeDelta
+                position = .region(region)
+            }
             recluster()
         }
+    }
+
+    /// The area holding all the photos, with room around the edge for the thumbnails.
+    private static func region(fitting locations: [AssetLocation]) -> MKCoordinateRegion? {
+        guard let first = locations.first else { return nil }
+        var (south, north, west, east) = (first.latitude, first.latitude, first.longitude, first.longitude)
+        for location in locations {
+            south = min(south, location.latitude)
+            north = max(north, location.latitude)
+            west = min(west, location.longitude)
+            east = max(east, location.longitude)
+        }
+        return MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: (south + north) / 2, longitude: (west + east) / 2),
+            span: MKCoordinateSpan(latitudeDelta: min(max((north - south) * 1.4, 0.02), 170), longitudeDelta: min(max((east - west) * 1.4, 0.02), 350))
+        )
     }
 
     /// Groups photos into cells about 1/8 of the visible height, so pins don't overlap.
