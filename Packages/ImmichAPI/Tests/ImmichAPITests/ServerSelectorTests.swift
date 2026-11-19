@@ -45,8 +45,12 @@ import Testing
 
 @Suite struct VersionCheckTests {
     @Test func classifiesVersions() {
-        #expect(VersionCheck(server: ServerVersion(major: 3, minor: 3, patch: 5)) == .matches)
-        #expect(VersionCheck(server: ServerVersion(major: 3, minor: 4, patch: 0)).warning?.contains("newer") == true)
+        #expect(VersionCheck(server: ServerVersion(major: 3, minor: 3, patch: 5)) == .supported)
+        #expect(VersionCheck(server: ServerVersion(major: 3, minor: 3, patch: 6)) == .supported)
+        #expect(VersionCheck(server: ServerVersion(major: 3, minor: 4, patch: 2)) == .supported)
+        #expect(VersionCheck(server: ServerVersion(major: 3, minor: 9, patch: 0)).warning == nil)
+        #expect(VersionCheck(server: ServerVersion(major: 4, minor: 0, patch: 0)) == .serverNewer(ServerVersion(major: 4, minor: 0, patch: 0)))
+        #expect(VersionCheck(server: ServerVersion(major: 4, minor: 0, patch: 0)).warning?.contains("built for version 3") == true)
         #expect(VersionCheck(server: ServerVersion(major: 3, minor: 3, patch: 4)).warning?.contains("older") == true)
         #expect(ServerVersion(major: 3, minor: 10, patch: 0) > ServerVersion(major: 3, minor: 9, patch: 9))
     }

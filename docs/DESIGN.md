@@ -2,7 +2,7 @@
 
 How Photos is built, and why. The README covers what the app does and how to install it.
 
-Photos is a native iOS client for a self-hosted [Immich](https://immich.app) server (v3.3.5). It is
+Photos is a native iOS client for a self-hosted [Immich](https://immich.app) server (v3.x; the client is generated from the v3.3.5 spec and tested with 3.3.5 and 3.4.2). It is
 written so that small servers (a Raspberry Pi 4 with 2 GB is the reference) stay responsive, and so
 that it can run side by side with the official Immich app without uploading anything twice.
 

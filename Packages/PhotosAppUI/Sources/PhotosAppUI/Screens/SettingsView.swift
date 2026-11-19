@@ -44,6 +44,13 @@ struct CloudServerSettingsView: View {
     }
 }
 
+/// The app's own version, as set in project.yml (MARKETING_VERSION).
+enum AppVersion {
+    static var display: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+    }
+}
+
 /// The sections of Cloud Server Settings.
 struct AppSettingsSections: View {
     let model: AppModel
@@ -54,6 +61,7 @@ struct AppSettingsSections: View {
 
     var body: some View {
         Group {
+            aboutSection
             accountsSection
             connectionSection
             ServerAddressSection(model: model)
@@ -65,6 +73,12 @@ struct AppSettingsSections: View {
                 HiddenSettingsSection(vault: session.hiddenVault)
                 TroubleshootingSection(session: session)
             }
+        }
+    }
+
+    private var aboutSection: some View {
+        Section("About") {
+            LabeledContent("App Version", value: AppVersion.display)
         }
     }
 

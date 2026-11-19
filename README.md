@@ -6,11 +6,11 @@
 
 **A native iOS photo library for your own server: it looks, feels and moves like a first-class iOS app, with your pictures on hardware you own.**
 
-![Version](https://img.shields.io/badge/version-0.8.4-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-0.8.6-blue?style=for-the-badge)
 ![Status](https://img.shields.io/badge/status-beta-orange?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/iOS-18%2B%20·%20iOS%2026%20Liquid%20Glass-black?style=for-the-badge)
 ![Swift](https://img.shields.io/badge/Swift-6%20strict%20concurrency-F05138?style=for-the-badge&logo=swift&logoColor=white)
-![Server](https://img.shields.io/badge/server-Immich%203.3.5-4250AF?style=for-the-badge)
+![Server](https://img.shields.io/badge/server-Immich%203.3%20%7C%203.4-4250AF?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green?style=for-the-badge)
 
 </div>
@@ -140,7 +140,7 @@ Photos and personal details are blurred.
 
 ## Recommended server setup
 
-- **[Immich](https://immich.app) v3.3.5** in Docker. A **Raspberry Pi 4 with 2 GB** works. The app keeps to 4 thumbnail requests and 2 uploads at a time.
+- **[Immich](https://immich.app) v3.3.5 or later 3.x** in Docker (tested with 3.3.5 and 3.4.2). A **Raspberry Pi 4 with 2 GB** works. The app keeps to 4 thumbnail requests and 2 uploads at a time.
 - **Storage:** an SSD over USB 3. Keep the Pi on Ethernet.
 - **One address everywhere:** put the server behind a reverse proxy with HTTPS on a name of its own (e.g. `photos.example.com`) and enter that name in the app. The app uses a single server address, at home and away.
 - **Single sign-on:** turn on OAuth in Immich and point it at your identity provider (Authentik, Keycloak, …). In the provider, allow the redirect `app.immich:///oauth-callback`, or turn on Immich's *mobile redirect URI override*.
