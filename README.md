@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="App/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png" width="128" alt="Photos app icon" />
+<img src="docs/app-icon.png" width="128" alt="Photos app icon" />
 
 # Photos
 
@@ -229,7 +229,6 @@ check Xcode › Settings › Accounts.
 ```sh
 Scripts/test.sh            # unit tests for every package that builds on macOS
 Scripts/generate-api.sh    # regenerate the Immich client after updating api/immich-openapi-specs.json
-swift Scripts/make-app-icon.swift App/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png   # redraw the icon
 ```
 
 Developer self-tests (launch arguments, console output):
